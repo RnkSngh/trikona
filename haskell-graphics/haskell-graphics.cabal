@@ -26,6 +26,9 @@ source-repository head
 library
   exposed-modules:
       Lib
+      PointerUtils
+      ShaderSources
+      ShaderUtils
   other-modules:
       Paths_haskell_graphics
   hs-source-dirs:
