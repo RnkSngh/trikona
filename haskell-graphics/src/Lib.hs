@@ -10,55 +10,37 @@ import qualified Graphics.UI.GLFW as GLFW
 import Graphics.GL.Core33
 import Graphics.GL.Types
 import Foreign -- includes many sub-modules
-import Foreign.C.String (newCAStringLen)
+import Foreign.C.String (newCAStringLen, newCString)
+import Interactivity (moveUp, moveLeft, moveDown, moveRight)
+import Triangles (getVertices, drawTriangleHoles, batchDrawTriangles)
 import ShaderUtils
 import ShaderSources
 import PointerUtils
+import Linear
+import Control.Lens
 
-winWidth = 2080 
-winHeight = 2080 
+winWidth = 1080 
+winHeight = 1080 
 winTitle = "Serpenski Triangles"
+step = 0.01 -- The step with which to apply
+iterations = 2
+
+
+
 baseTriangleVerticies = [
-        0.0, (sqrt 3)/4 + 0.5 , 0.0,
-        0.5, - (sqrt 3)/4+0.5, 0.0,
-        -0.5, - (sqrt 3)/4 + 0.5, 0.0
+        0.0, (sqrt 3)/4, 0.0,
+        0.5, - (sqrt 3)/4, 0.0,
+        -0.5, - (sqrt 3)/4, 0.0
         ] :: [GLfloat]
 
 
-triangle2 = [
-        0.25, 0.50, 0.0,
-        0, -0.43301270189 + 0.5 , 0.0,
-        -0.25, 0.50, 0.0
+startingSubTriangle = [
+        0.25, 0.00, 0.0,
+        0, -0.43301270189 , 0.0,
+        -0.25, 0.00, 0.0
         ] :: [GLfloat]
 
--- subTriangles :: IO [[GLfloat]]
--- subTriangles = [[
---         0.25, 0.0, 0.0, -- 0-2
---         0, -0.43301270189, 0.0, -- 3-5
---         -0.25, 0.0, 0.0 -- 6-8 
---         ]] :: [[GLfloat]]
-
-
-
-
-indices = [
-    0, 1, 2
-    ] :: [GLuint]
-
-indicesSize = fromIntegral $ sizeOf (0 :: GLuint) * (length indices) 
-
--- Returns a 9 coordinate array of an up-side down equilateral triangle at the given anchor point  
-getVertices :: (GLfloat, GLfloat) -> GLfloat -> [GLfloat]
-getVertices (x_1, y_1) l = [ x_1 + b, y_1, 0.0, x_1 + (b/2), y_1 - h, 0.0, x_1, y_1, 0.0 ]
-    where
-        b = l
-        h = l * (sqrt 3) / 2 
-    
-
-
-
-attachShaders vertexShaderSource fragmentShaderSource = do
-
+attachShaders vertexShaderSource fragmentShaderSource transP = do
     vertexShader <-  ShaderUtils.compileShader GL_VERTEX_SHADER vertexShaderSource 
     fragmentShader <- ShaderUtils.compileShader GL_FRAGMENT_SHADER fragmentShaderSource
 
@@ -72,107 +54,40 @@ attachShaders vertexShaderSource fragmentShaderSource = do
             PointerUtils.checkError shaderProgram GL_LINK_STATUS glGetProgramiv glGetProgramInfoLog  "GL Link error"
             glDeleteShader vertexShader
             glDeleteShader fragmentShader
-            glUseProgram shaderProgram
+            glUseProgram shaderProgram  
+            doUpdate transP shaderProgram
 
         _ -> do 
             putStrLn "One of the shaders is nothing"
     return ()
 
+doUpdate transP shaderProgram = do
+    -- Attach Green shader
+    timeValue <- maybe 0 realToFrac <$> GLFW.getTime
+    let greenValue = sin timeValue / 2 + 0.5
+    ourColor <- newCString "ourColor"
+
+    -- Attach 
+    vertexColorLocation <- glGetUniformLocation shaderProgram ourColor
+    glUniform4f vertexColorLocation 0.0 greenValue 0.0 1.0
+    transform <- newCString "transform1"
+    transformLoc <- glGetUniformLocation shaderProgram transform
+    glUniformMatrix4fv transformLoc 1 GL_FALSE (castPtr transP)
 
 
+callback pointer window key scanCode keyState modKeys = do
+    when (key == GLFW.Key'Escape && keyState == GLFW.KeyState'Pressed) 
+        (GLFW.setWindowShouldClose window True)
+    when (key == GLFW.Key'Up && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (moveUp 0.01 pointer )
+    when (key == GLFW.Key'Down && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (moveDown 0.01 pointer )
+    when (key == GLFW.Key'Right && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (moveLeft 0.01 pointer )
+    when (key == GLFW.Key'Left && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (moveRight 0.01 pointer )
 
 
-
-drawTriangle :: [GLfloat]  -> String -> String -> IO() 
-drawTriangle vertices vertexShaderSource fragmentShaderSource = do
-    let verticesSize = fromIntegral $ sizeOf (0.0 :: GLfloat) * (length vertices)
-    vertices1P <- newArray vertices 
-    indicesP <- newArray indices
-    vboP <- malloc
-    vaoP <- malloc
-    eboP <- malloc
-
-    glGenBuffers 1 vboP
-    vbo <- peek vboP
-    glGenVertexArrays 1 vaoP
-    vao <- peek vaoP
-
-    glGenBuffers 1 eboP
-    ebo <- peek eboP
-
-
-    glBindVertexArray vao
-    glBindBuffer GL_ARRAY_BUFFER vbo
-    glBufferData GL_ARRAY_BUFFER verticesSize (castPtr vertices1P) GL_STATIC_DRAW
-
-    glBindBuffer GL_ELEMENT_ARRAY_BUFFER ebo 
-    glBufferData GL_ELEMENT_ARRAY_BUFFER indicesSize (castPtr indicesP) GL_STATIC_DRAW
-
-    let threeFloats = fromIntegral $ sizeOf (0.0::GLfloat) * 3
-    glVertexAttribPointer 0 3 GL_FLOAT GL_FALSE threeFloats nullPtr
-    glEnableVertexAttribArray 0
-
-    glDrawElements GL_TRIANGLES 3 GL_UNSIGNED_INT nullPtr
-    glBindVertexArray 0
-
-    return ()
-
-
--- drawTriangleHoles :: [[GLfloat]] -> String -> String -> IO() 
-drawTriangleHoles level anchorTriangle vertexShaderSource fragmentShaderSource =  do
-    -- let a = \x drawTriangle
-     
-
-    -- let a = sequence $ 
-    -- verticies <- subTriangles  
-    -- let a = \x -> [drawTriangle x vertexShaderSource fragmentShaderSource ]
-    -- let b = \x -> drawTriangle x vertexShaderSource fragmentShaderSource 
-
-
-    
-    -- putStrLn ( "typeOf typeOf argument " ++ (show $ typeOf $ sequence $ IO (a triangle2)))
-    -- putStrLn ( "typeOf typeOf argument " ++ (show $ typeOf a))
-    -- let y = \x -> a vertexShaderSource fragmentShaderSource
-    -- x = fmap a verticies 
-
-    -- putStrLn "working"
-    -- x <- a <$> subTriangles
-    -- fmap a subTriangles
-    -- x <- b <$> subTriangles
-    
-    -- let x = [ putStrLn "PRINTING" | i <- triangle2] 
-
-    
-    -- returns going from [float] ->  IO() ; we want [float] -> [IO()]
-    -- x = 
-    -- putStrLn ( "typeOf typeOf argument" ++ (show $ typeOf subTri1))
-    -- putStrLn ( "typeOf Subtriangles" ++ (show $ typeOf subTriangles))
-    -- a $ subTriangles !! 0
-    -- drawTriangle triangle2 vertexShaderSource fragmentShaderSource 
-
-    
-    
-    -- putStrLn ("Drawing Triangle Level: " ++ show level ++ " " ++ (concat $ map (\x -> show x ++ ", ") anchorTriangle ))
-    drawTriangle  anchorTriangle vertexShaderSource fragmentShaderSource
-
-    if level == 0 
-        then return()
-        else do
-            let w =  (anchorTriangle !! 0) - (anchorTriangle !! 6) -- Width of current triangleHole 
-            let h = (anchorTriangle !! 1) - (anchorTriangle !! 4)
-            let p_x = anchorTriangle !! 6 
-            let p_y =  anchorTriangle !! 7 
-
-            let leftBottomTriangle = getVertices ( p_x - w/4, p_y - h/2 ) (w/2)
-            let rightBottomTriangle = getVertices (p_x + 3*w/4, p_y - h/2 ) (w/2) 
-            let topTriangle = getVertices (p_x + w/4 , p_y + h/2 ) (w/2) 
-
-            drawTriangleHoles (level-1) leftBottomTriangle vertexShaderSource fragmentShaderSource
-            drawTriangleHoles (level-1) (rightBottomTriangle) vertexShaderSource fragmentShaderSource
-            drawTriangleHoles (level-1) (topTriangle) vertexShaderSource fragmentShaderSource
-        
-
-    
 
 draw :: IO ()
 draw = do
@@ -182,11 +97,17 @@ draw = do
     GLFW.windowHint (GLFW.WindowHint'OpenGLProfile GLFW.OpenGLProfile'Core)
     GLFW.windowHint (GLFW.WindowHint'Resizable False)
     GLFW.windowHint (GLFW.WindowHint'OpenGLForwardCompat True);
-    -- GLFW.defaultWindowHints
     maybeWindow <- GLFW.createWindow winWidth winHeight winTitle Nothing Nothing
+    let triangleVerticies = baseTriangleVerticies
+
     case maybeWindow of
         Nothing -> putStrLn "Failed to create a GLFW window!"
         Just window -> do
+            transP <- malloc
+            let transformMatrix = mkTransformationMat identity (V3 (0.0::GLfloat) 0.0 0.0 ) 
+            poke transP (transpose transformMatrix)
+            GLFW.setKeyCallback window (Just (callback transP))
+
             -- calibrate the viewport
             GLFW.makeContextCurrent (Just window)
             (x,y) <- GLFW.getFramebufferSize window
@@ -197,13 +118,15 @@ draw = do
                     shouldContinue <- not <$> GLFW.windowShouldClose window
                     when shouldContinue $ do
                         GLFW.pollEvents
-                        attachShaders ShaderSources.vertexShaderSource ShaderSources.fragmentShaderSourceBlue
-                        drawTriangle baseTriangleVerticies ShaderSources.vertexShaderSource ShaderSources.fragmentShaderSourceBlue
+                        glClearColor 0.0 0.0 0.0 1.0
+                        glClear GL_COLOR_BUFFER_BIT
+                        attachShaders ShaderSources.vertexShaderSourceTransform ShaderSources.fragmentShaderSourceBlue transP
+                        batchDrawTriangles triangleVerticies 
 
-                        attachShaders ShaderSources.vertexShaderSource ShaderSources.fragmentShaderSourceBlack
-                        drawTriangleHoles 7 triangle2 ShaderSources.vertexShaderSource ShaderSources.fragmentShaderSourceBlack 
+                        attachShaders ShaderSources.vertexShaderSourceTransform ShaderSources.fragmentShaderSourcePulse transP
+                        drawTriangleHoles iterations startingSubTriangle 
                         GLFW.swapBuffers window
-                        loop
+                    loop
             loop
     GLFW.terminate
 

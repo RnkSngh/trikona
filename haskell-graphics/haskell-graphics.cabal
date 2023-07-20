@@ -25,10 +25,12 @@ source-repository head
 
 library
   exposed-modules:
+      Interactivity
       Lib
       PointerUtils
       ShaderSources
       ShaderUtils
+      Triangles
   other-modules:
       Paths_haskell_graphics
   hs-source-dirs:
@@ -38,6 +40,8 @@ library
       GLFW-b
     , base >=4.7 && <5
     , gl
+    , lens
+    , linear
   default-language: Haskell2010
 
 executable haskell-graphics-exe
@@ -52,6 +56,8 @@ executable haskell-graphics-exe
     , base >=4.7 && <5
     , gl
     , haskell-graphics
+    , lens
+    , linear
   default-language: Haskell2010
 
 test-suite haskell-graphics-test
@@ -67,4 +73,6 @@ test-suite haskell-graphics-test
     , base >=4.7 && <5
     , gl
     , haskell-graphics
+    , lens
+    , linear
   default-language: Haskell2010
