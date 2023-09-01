@@ -18,9 +18,9 @@ drawTriangle :: [GLfloat]  -> IO()
 drawTriangle vertices = do
     let verticesSize = fromIntegral $ sizeOf (0.0 :: GLfloat) * (length vertices)
     vertices1P <- newArray vertices 
+    let indicesSize = fromIntegral $ sizeOf (0 :: GLuint) * (length connectivity) 
 
     indicesP <- newArray connectivity 
-    let indicesSize = fromIntegral $ sizeOf (0 :: GLuint) * (length connectivity) 
     vboP <- malloc
     vaoP <- malloc
     eboP <- malloc

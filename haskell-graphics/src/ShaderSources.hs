@@ -1,4 +1,4 @@
-module ShaderSources (vertexShaderSource, vertexShaderSourceTransform, fragmentShaderSourceBlue, fragmentShaderSourceBlack, fragmentShaderSourceRed, fragmentShaderSourcePulse) where
+module ShaderSources (vertexShaderSource, vertexShaderSourceTransform, fragmentShaderSourceBlue, fragmentShaderSourceBlack, fragmentShaderSourceRed, fragmentShaderSourcePulse, fragmentShaderSourceColor ) where
 vertexShaderSource = "#version 330 core\n\
     \layout (location = 0) in vec3 position;\
     \void main()\
@@ -9,28 +9,23 @@ vertexShaderSource = "#version 330 core\n\
 vertexShaderSourceTransform = "#version 330 core\n\
     \layout (location = 0) in vec3 position;\
     \layout (location = 1) in vec2 aTexCoord;\
-    \out vec2 TexCoord;\
+    \out vec3 ourColor;\
     \uniform mat4 transform1;\
 
     \void main()\
     \{\
     \    gl_Position = transform1 * vec4(position.x, position.y, position.z, 1.0);\
-    \    TexCoord = vec2(aTexCoord.x, aTexCoord.y);\
+    \    ourColor = vec3(position.x + 0.1, position.y + 0.1, position.z + 0.1);\
     \}" 
 
--- vertexShaderSourceTransform = "#version 330 core\n\
---     \layout (location = 0) in vec3 aPos;\
---     \layout (location = 1) in vec2 aTexCoord;\
---     \out vec2 TexCoord;\
---     \uniform mat4 transform;\
---     \void main()\
---     \{\
---     \    gl_Position = transform * vec4(aPos, 1.0f);\
---     \    TexCoord = vec2(aTexCoord.x, aTexCoord.y);\
---     \}"
-
-
--- vertexShaderSourceTransform = unlines [""]
+fragmentShaderSourceColor = unlines ["#version 330 core",
+    "out vec4 FragColor;",
+    "in vec3 ourColor;",
+    "",
+    "void main()",
+    "{",
+    "    FragColor = vec4(ourColor, 1.0f);",
+    "}"]
 
 fragmentShaderSourceBlue = unlines ["#version 330 core",
     "out vec4 FragColor;",
