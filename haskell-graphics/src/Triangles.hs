@@ -47,6 +47,13 @@ drawTriangle vertices = do
 
     glDrawElements GL_TRIANGLES 3 GL_UNSIGNED_INT nullPtr
     glBindVertexArray 0
+
+    free vboP
+    free vaoP
+    free eboP
+    free indicesP 
+    free vertices1P 
+
     return ()
 
 batchDrawTriangles vertices = do 
@@ -83,6 +90,11 @@ batchDrawTriangles vertices = do
     glDrawElements GL_TRIANGLES numTriangles GL_UNSIGNED_INT nullPtr
     glBindVertexArray 0
 
+    free vboP
+    free vaoP
+    free eboP
+    free indicesP 
+    free vertices1P 
     return () 
 
 
@@ -90,7 +102,6 @@ batchDrawTriangles vertices = do
 drawTriangleHoles :: Int -> [GLfloat] -> IO()
 drawTriangleHoles level anchorTriangle =  do
     drawTriangle  anchorTriangle 
-                 
     if level == 0 
         then return()
         else do
@@ -112,4 +123,19 @@ getVertices (x_1, y_1) l = [ x_1 + b, y_1, 0.0, x_1 + (b/2), y_1 - h, 0.0, x_1, 
         b = l
         h = l * (sqrt 3) / 2 
 
+getTriangleHoleCoordinates :: Int -> [GLfloat] -> [GLfloat]
+getTriangleHoleCoordinates level anchorTriangle = 
+    if level == 0 
+    then [ ]
+    else 
+        let w =  (anchorTriangle !! 0) - (anchorTriangle !! 6) -- Width of current triangleHole 
+        let h = (anchorTriangle !! 1) - (anchorTriangle !! 4)
+        let p_x = anchorTriangle !! 6 
+        let p_y =  anchorTriangle !! 7 
+        let leftBottomTriangle = getVertices ( p_x - w/4, p_y - h/2 ) (w/2)
+        let rightBottomTriangle = getVertices (p_x + 3*w/4, p_y - h/2 ) (w/2) 
+        let topTriangle = getVertices (p_x + w/4 , p_y + h/2 ) (w/2) 
+        fold (++) [anchorTriangle,  getTriangleHoleCoordinates (level-1) leftBottomTriangle , 
+        getTriangleHoleCoordinates (level-1) (rightBottomTriangle),
+        getTriangleHoleCoordinates (level-1) (topTriangle)] 
 

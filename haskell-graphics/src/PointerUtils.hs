@@ -19,5 +19,8 @@ checkError program code glGetiv getInfoLog errorString= do
         result <- fromIntegral <$> peek resultP
         logBytes <- peekArray result infoLog
         putStrLn (map (toEnum.fromEnum) logBytes)
+        free resultP
+
+    free successP
     return success 
 
