@@ -1,9 +1,8 @@
-module Triangles (drawTriangle, batchDrawTriangles , drawTriangleHoles, getVertices) where
+module Triangles (drawTriangle, batchDrawTriangles , drawTriangleHoles, getVertices, getTriangleHoleCoordinates) where
 import Graphics.GL.Core33
 import Graphics.GL.Types
 import Foreign -- includes many sub-modules
 import Foreign.C.String (newCAStringLen, newCString)
-import Interactivity (moveUp, moveLeft, moveDown, moveRight)
 import ShaderUtils
 import ShaderSources
 import PointerUtils
@@ -126,16 +125,16 @@ getVertices (x_1, y_1) l = [ x_1 + b, y_1, 0.0, x_1 + (b/2), y_1 - h, 0.0, x_1, 
 getTriangleHoleCoordinates :: Int -> [GLfloat] -> [GLfloat]
 getTriangleHoleCoordinates level anchorTriangle = 
     if level == 0 
-    then [ ]
+    then []
     else 
         let w =  (anchorTriangle !! 0) - (anchorTriangle !! 6) -- Width of current triangleHole 
-        let h = (anchorTriangle !! 1) - (anchorTriangle !! 4)
-        let p_x = anchorTriangle !! 6 
-        let p_y =  anchorTriangle !! 7 
-        let leftBottomTriangle = getVertices ( p_x - w/4, p_y - h/2 ) (w/2)
-        let rightBottomTriangle = getVertices (p_x + 3*w/4, p_y - h/2 ) (w/2) 
-        let topTriangle = getVertices (p_x + w/4 , p_y + h/2 ) (w/2) 
-        fold (++) [anchorTriangle,  getTriangleHoleCoordinates (level-1) leftBottomTriangle , 
+            h = (anchorTriangle !! 1) - (anchorTriangle !! 4) 
+            p_x = anchorTriangle !! 6 
+            p_y =  anchorTriangle !! 7 
+            leftBottomTriangle = getVertices ( p_x - w/4, p_y - h/2 ) (w/2)
+            rightBottomTriangle = getVertices (p_x + 3*w/4, p_y - h/2 ) (w/2) 
+            topTriangle = getVertices (p_x + w/4 , p_y + h/2 ) (w/2) 
+        in foldl (++) [] [anchorTriangle,  getTriangleHoleCoordinates (level-1) leftBottomTriangle , 
         getTriangleHoleCoordinates (level-1) (rightBottomTriangle),
         getTriangleHoleCoordinates (level-1) (topTriangle)] 
 

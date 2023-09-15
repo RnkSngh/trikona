@@ -11,8 +11,8 @@ import Graphics.GL.Core33
 import Graphics.GL.Types
 import Foreign -- includes many sub-modules
 import Foreign.C.String (newCAStringLen, newCString)
-import Interactivity (moveUp, moveLeft, moveDown, moveRight)
-import Triangles (getVertices, drawTriangleHoles, batchDrawTriangles, drawTriangle)
+import Interactivity (move, rotateY, rotateX)
+import Triangles (getVertices, drawTriangleHoles, batchDrawTriangles, drawTriangle, getTriangleHoleCoordinates)
 import ShaderUtils
 import ShaderSources
 import PointerUtils
@@ -23,7 +23,7 @@ winWidth = 1080
 winHeight = 1080 
 winTitle = "Serpenski Triangles"
 step = 0.01 -- The step with which to apply
-iterations = 5 
+iterations = 10 
 
 
 
@@ -72,13 +72,25 @@ handleKeyClick pointer window key scanCode keyState modKeys = do
     when (key == GLFW.Key'Escape && keyState == GLFW.KeyState'Pressed) 
         (GLFW.setWindowShouldClose window True)
     when (key == GLFW.Key'Up && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
-        (moveUp 0.01 pointer )
+        (move _y 0.01 pointer )
     when (key == GLFW.Key'Down && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
-        (moveDown 0.01 pointer )
+        (move _y (-0.01) pointer )
     when (key == GLFW.Key'Right && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
-        (moveLeft 0.01 pointer )
+        (move _x 0.01 pointer )
     when (key == GLFW.Key'Left && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
-        (moveRight 0.01 pointer )
+        (move _x (-0.01) pointer )
+    putStrLn (show key)
+    when (key == GLFW.Key'D && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (rotateY (pi/50) pointer)
+    when (key == GLFW.Key'A && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (rotateY (-pi/50) pointer)
+    when (key == GLFW.Key'W && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (rotateX (pi/50) pointer)
+    when (key == GLFW.Key'S && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (rotateX (-pi/50) pointer)
+
+
+
 
 
 
@@ -119,6 +131,7 @@ draw = do
                     blueShaderProgram <- attachShaders vertexShader fragmentShaderBlue transP
                     pulseShaderProgram <- attachShaders vertexShader fragmentShaderPulse transP
 
+                    let triangleHoleVertices = getTriangleHoleCoordinates iterations startingSubTriangle
                     -- Render loop
                     let loop = do
                             shouldContinue <- not <$> GLFW.windowShouldClose window
@@ -132,7 +145,9 @@ draw = do
 
                                 glUseProgram pulseShaderProgram 
                                 updateUniforms transP pulseShaderProgram ourColorCString transformCString
-                                drawTriangleHoles iterations startingSubTriangle 
+                                
+                                batchDrawTriangles triangleHoleVertices
+                                -- drawTriangleHoles iterations startingSubTriangle 
 
                                 GLFW.swapBuffers window
                                 loop

@@ -1,28 +1,30 @@
-module Interactivity (moveUp, moveDown, moveRight, moveLeft) where
+module Interactivity (move, rotateY, rotateX) where
 
 import Foreign -- includes many sub-modules
 import Linear
 import Control.Lens
-import Foreign.C.String (newCAStringLen, newCString)
 
-moveUp step pointer = do
-    a<- peek pointer 
-    poke pointer (over (_w._y) (\y -> y + step) a)
-
-moveDown step pointer = do
+move address step pointer = do
     a <- peek pointer 
-    poke pointer (over  (_w._y) (\y -> y - step) a)
-
-
-moveLeft step pointer = do
-    a <- peek pointer 
-    poke pointer (over (_w._x) (\x -> x + step) a)
-
-moveRight step pointer = do
-    a <- peek pointer 
-    poke pointer (over (_w._x) (\x -> x - step) a)
+    poke pointer (over (_w.address) (\x -> x - step) a)
     
+rotateY step pointer = do
+    let rotQ = axisAngle (V3 0 1 0) (step)
+    let rotMat = fromQuaternion rotQ
+    let transformationMat = transpose (mkTransformationMat rotMat (V3 0 0 0)  )
+    a <- peek pointer
+    let newA = a !*! transformationMat
+    poke pointer newA
 
+rotateX step pointer = do
+   let rotQ = axisAngle (V3 1 0 0) (step)
+   let rotMat = fromQuaternion rotQ
+   let transformationMat = transpose (mkTransformationMat rotMat (V3 0 0 0)  )
+   a <- peek pointer
+   let newA = a !*! transformationMat
+   poke pointer newA
+
+ 
 
 
     
