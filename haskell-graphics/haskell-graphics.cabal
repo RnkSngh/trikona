@@ -28,6 +28,7 @@ library
       Interactivity
       Lib
       PointerUtils
+      Pyramids
       ShaderSources
       ShaderUtils
       Triangles

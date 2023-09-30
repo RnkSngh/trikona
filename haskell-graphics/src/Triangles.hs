@@ -96,8 +96,6 @@ batchDrawTriangles vertices = do
     free vertices1P 
     return () 
 
-
-
 drawTriangleHoles :: Int -> [GLfloat] -> IO()
 drawTriangleHoles level anchorTriangle =  do
     drawTriangle  anchorTriangle 

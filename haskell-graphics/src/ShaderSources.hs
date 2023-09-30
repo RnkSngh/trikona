@@ -11,10 +11,11 @@ vertexShaderSourceTransform = "#version 330 core\n\
     \layout (location = 1) in vec2 aTexCoord;\
     \out vec3 ourColor;\
     \uniform mat4 transform1;\
+    \uniform mat4 projection;\
 
     \void main()\
     \{\
-    \    gl_Position = transform1 * vec4(position.x, position.y, position.z, 1.0);\
+    \    gl_Position = projection*transform1 * vec4(position.x, position.y, position.z, 1.0);\
     \    ourColor = vec3(position.x + 0.1, position.y + 0.1, position.z + 0.1);\
     \}" 
 
@@ -32,7 +33,7 @@ fragmentShaderSourceBlue = unlines ["#version 330 core",
     "",
     "void main()",
     "{",
-    "    FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);",
+    "    FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);",
     "}"]
 
 fragmentShaderSourceBlack = unlines ["#version 330 core",

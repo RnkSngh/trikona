@@ -18,6 +18,7 @@ import ShaderSources
 import PointerUtils
 import Linear
 import Control.Lens
+import Pyramids (batchDrawPyramids)
 
 winWidth = 1080 
 winHeight = 1080 
@@ -41,6 +42,18 @@ startingSubTriangle = [
         ] :: [GLfloat]
 
 
+
+pyramidVerticies = [
+        (sqrt (8/9)), 0, -(1/3),
+        -(sqrt (2/9)), sqrt (2/3), -(1/3),
+        -(sqrt (2/9)), -sqrt (2/3), -(1/3),
+        0, 0, 1
+        ] :: [GLfloat]
+
+pyramidVerticies2 = map (\x -> x/2) pyramidVerticies  
+
+
+
 attachShaders vertexShader fragmentShader transP = do
     -- Link Arrays
     shaderProgram <- glCreateProgram
@@ -53,7 +66,7 @@ attachShaders vertexShader fragmentShader transP = do
     return shaderProgram  
 
 -- Update time and ourColor uniforms
-updateUniforms transP shaderProgram ourColorCString transformCString= do
+updateUniforms transP projectionP shaderProgram ourColorCString transformCString projectionCString = do
     -- Calculate green shader
     timeValue <- maybe 0 realToFrac <$> GLFW.getTime
     let greenValue = sin timeValue / 2 + 0.5
@@ -65,6 +78,11 @@ updateUniforms transP shaderProgram ourColorCString transformCString= do
     -- Attach transform uniform
     transformLoc <- glGetUniformLocation shaderProgram transformCString 
     glUniformMatrix4fv transformLoc 1 GL_FALSE (castPtr transP)
+
+    projectionLoc <- glGetUniformLocation shaderProgram projectionCString 
+    glUniformMatrix4fv projectionLoc 1 GL_FALSE (castPtr projectionP)
+
+
     return ()
 
 
@@ -79,6 +97,10 @@ handleKeyClick pointer window key scanCode keyState modKeys = do
         (move _x 0.01 pointer )
     when (key == GLFW.Key'Left && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
         (move _x (-0.01) pointer )
+    when (key == GLFW.Key'J && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (move _z (0.01) pointer )
+    when (key == GLFW.Key'K && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
+        (move _z (-0.01) pointer )
     putStrLn (show key)
     when (key == GLFW.Key'D && (keyState == GLFW.KeyState'Pressed || keyState == GLFW.KeyState'Repeating)) 
         (rotateY (pi/50) pointer)
@@ -107,6 +129,7 @@ draw = do
 
     ourColorCString <- newCString "ourColor"
     transformCString <- newCString "transform1"
+    projectionCString <- newCString "projection"
 
     case maybeWindow of
         Nothing -> putStrLn "Failed to create a GLFW window!"
@@ -114,6 +137,13 @@ draw = do
             transP <- malloc
             let transformMatrix = mkTransformationMat identity (V3 (0.0::GLfloat) 0.0 0.0 ) 
             poke transP (transpose transformMatrix)
+            move _z (2.0)  transP
+
+            projectionP <- malloc
+            let projection  = perspective ((pi /4) ::Float) 1.0 1.0 100.0
+            putStrLn $ show projection
+            poke projectionP projection 
+            
             GLFW.setKeyCallback window (Just (handleKeyClick transP))
 
             -- calibrate the viewport
@@ -122,14 +152,25 @@ draw = do
             glViewport 0 0 (fromIntegral x) (fromIntegral y)
 
             fragmentShaderBlue <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourceBlue
-            fragmentShaderPulse <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourcePulse
+            -- fragmentShaderPulse <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourcePulse
+            fragmentShaderRed <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourceRed
             vertexShader <- ShaderUtils.compileShader GL_VERTEX_SHADER ShaderSources.vertexShaderSourceTransform 
 
-            case (fragmentShaderBlue, fragmentShaderPulse, vertexShader) of 
-                (Just fragmentShaderBlue, Just fragmentShaderPulse, Just vertexShader)-> do
+            glEnable (GL_DEPTH_TEST)
+            glPolygonMode GL_FRONT_AND_BACK GL_LINE
+            glEnable GL_LINE_SMOOTH
+            -- glLineWidth 100.0
+            -- supportedWidths <- GL_ALIASED_LINE_WIDTH_RANGE
+            -- putStrLn $ "supportedwidths: " ++ (show supportedWidths)
+            -- glEnable(GL_BLEND);
+            -- glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            case (fragmentShaderBlue, fragmentShaderRed, vertexShader) of 
+                (Just fragmentShaderBlue, Just fragmentShaderRed , Just vertexShader)-> do
 
                     blueShaderProgram <- attachShaders vertexShader fragmentShaderBlue transP
-                    pulseShaderProgram <- attachShaders vertexShader fragmentShaderPulse transP
+                    redShaderProgram <- attachShaders vertexShader fragmentShaderRed transP
+                    -- pulseShaderProgram <- attachShaders vertexShader fragmentShaderPulse transP
 
                     let triangleHoleVertices = getTriangleHoleCoordinates iterations startingSubTriangle
                     -- Render loop
@@ -138,15 +179,25 @@ draw = do
                             when shouldContinue $ do
                                 GLFW.pollEvents
                                 glClearColor 0.0 0.0 0.0 1.0
-                                glClear GL_COLOR_BUFFER_BIT
+                                glClear $ GL_COLOR_BUFFER_BIT .|. GL_DEPTH_BUFFER_BIT
+          
                                 glUseProgram blueShaderProgram
-                                updateUniforms transP blueShaderProgram ourColorCString transformCString
-                                drawTriangle triangleVerticies 
+                                -- updateUniforms transP blueShaderProgram ourColorCString transformCString
+                                updateUniforms transP projectionP blueShaderProgram ourColorCString transformCString projectionCString
+                                batchDrawPyramids pyramidVerticies
 
-                                glUseProgram pulseShaderProgram 
-                                updateUniforms transP pulseShaderProgram ourColorCString transformCString
+
+                                glUseProgram redShaderProgram 
+                                updateUniforms transP projectionP redShaderProgram ourColorCString transformCString projectionCString
+                                batchDrawPyramids pyramidVerticies2
+
+
+                                -- drawTriangle triangleVerticies 
+
+                                -- glUseProgram pulseShaderProgram 
+                                -- updateUniforms transP pulseShaderProgram ourColorCString transformCString
                                 
-                                batchDrawTriangles triangleHoleVertices
+                                -- batchDrawTriangles triangleHoleVertices
                                 -- drawTriangleHoles iterations startingSubTriangle 
 
                                 GLFW.swapBuffers window
