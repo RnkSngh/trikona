@@ -31,4 +31,4 @@ Any contributions are greatly appreciated! Feel free to open up a PR to address 
 
 ## Acknowledgements
 
-This project was started during my Summer 2 '23 batch at the [Recurse Center](https://www.recurse.com). Thank you to everyone in the community for providing a supportive and encouraging space for such a diverse collection of programmers.
+This project was started during my Summer 2 '23 batch at the [Recurse Center](https://www.recurse.com). Thank you to everyone in the community for providing a supportive and encouraging space for such a diverse collection of programmers, and especially to [Rhea](https://github.com/rcjara) for paring on this with me many many times and offering her functional programming expertise to help me get out of the many ruts we've encountered along the way! 
