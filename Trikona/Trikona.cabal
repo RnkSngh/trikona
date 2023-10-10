@@ -4,24 +4,23 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           haskell-graphics
+name:           Trikona
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/haskell-graphics#readme>
-homepage:       https://github.com/githubuser/haskell-graphics#readme
-bug-reports:    https://github.com/githubuser/haskell-graphics/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2023 Author name here
+description:    Please see the README on GitHub at <https://github.com/rnksngh/Trikona#readme>
+homepage:       https://github.com/rnksngh/trikona#readme
+bug-reports:    https://github.com/rnksngh/trikona/issues
+author:         Raunak Singh
+maintainer:     raunaksingh2.718@gmail.com
+copyright:      Raunak Singh
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    CHANGELOG.md
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/haskell-graphics
+  location: https://github.com/rnksngh/trikona
 
 library
   exposed-modules:
@@ -33,7 +32,7 @@ library
       ShaderUtils
       Triangles
   other-modules:
-      Paths_haskell_graphics
+      Paths_Trikona
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -45,35 +44,35 @@ library
     , linear
   default-language: Haskell2010
 
-executable haskell-graphics-exe
+executable Trikona-exe
   main-is: Main.hs
   other-modules:
-      Paths_haskell_graphics
+      Paths_Trikona
   hs-source-dirs:
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       GLFW-b
+    , Trikona
     , base >=4.7 && <5
     , gl
-    , haskell-graphics
     , lens
     , linear
   default-language: Haskell2010
 
-test-suite haskell-graphics-test
+test-suite Trikona-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_haskell_graphics
+      Paths_Trikona
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       GLFW-b
+    , Trikona
     , base >=4.7 && <5
     , gl
-    , haskell-graphics
     , lens
     , linear
   default-language: Haskell2010
