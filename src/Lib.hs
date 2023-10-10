@@ -73,7 +73,7 @@ updateUniforms transP projectionP shaderProgram ourColorCString transformCString
 
     -- Attach time uniform 
     vertexColorLocation <- glGetUniformLocation shaderProgram ourColorCString 
-    glUniform4f vertexColorLocation 0.0 greenValue 0.0 1.0
+    glUniform4f vertexColorLocation (1-greenValue) (greenValue/2) greenValue 1.0
 
     -- Attach transform uniform
     transformLoc <- glGetUniformLocation shaderProgram transformCString 
@@ -152,27 +152,17 @@ draw = do
             glViewport 0 0 (fromIntegral x) (fromIntegral y)
 
             fragmentShaderBlue <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourceBlue
-            -- fragmentShaderPulse <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourcePulse
-            fragmentShaderRed <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourceRed
+            fragmentShaderPulse <- ShaderUtils.compileShader GL_FRAGMENT_SHADER ShaderSources.fragmentShaderSourcePulse
             vertexShader <- ShaderUtils.compileShader GL_VERTEX_SHADER ShaderSources.vertexShaderSourceTransform 
 
-            glEnable (GL_DEPTH_TEST)
-            glPolygonMode GL_FRONT_AND_BACK GL_LINE
-            glEnable GL_LINE_SMOOTH
-            -- glLineWidth 100.0
-            -- supportedWidths <- GL_ALIASED_LINE_WIDTH_RANGE
-            -- putStrLn $ "supportedwidths: " ++ (show supportedWidths)
-            -- glEnable(GL_BLEND);
-            -- glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            case (fragmentShaderBlue, fragmentShaderRed, vertexShader) of 
-                (Just fragmentShaderBlue, Just fragmentShaderRed , Just vertexShader)-> do
+            case (fragmentShaderBlue, vertexShader, fragmentShaderPulse) of 
+                (Just fragmentShaderBlue, Just vertexShader, Just fragmentShaderPulse)-> do
 
                     blueShaderProgram <- attachShaders vertexShader fragmentShaderBlue transP
-                    redShaderProgram <- attachShaders vertexShader fragmentShaderRed transP
-                    -- pulseShaderProgram <- attachShaders vertexShader fragmentShaderPulse transP
+                    pulseShaderProgram <- attachShaders vertexShader fragmentShaderPulse transP
 
                     let triangleHoleVertices = getTriangleHoleCoordinates iterations startingSubTriangle
+
                     -- Render loop
                     let loop = do
                             shouldContinue <- not <$> GLFW.windowShouldClose window
@@ -181,24 +171,14 @@ draw = do
                                 glClearColor 0.0 0.0 0.0 1.0
                                 glClear $ GL_COLOR_BUFFER_BIT .|. GL_DEPTH_BUFFER_BIT
           
-                                glUseProgram blueShaderProgram
-                                -- updateUniforms transP blueShaderProgram ourColorCString transformCString
+                                glUseProgram blueShaderProgram 
                                 updateUniforms transP projectionP blueShaderProgram ourColorCString transformCString projectionCString
-                                batchDrawPyramids pyramidVerticies
+                                drawTriangle triangleVerticies 
 
-
-                                glUseProgram redShaderProgram 
-                                updateUniforms transP projectionP redShaderProgram ourColorCString transformCString projectionCString
-                                batchDrawPyramids pyramidVerticies2
-
-
-                                -- drawTriangle triangleVerticies 
-
-                                -- glUseProgram pulseShaderProgram 
-                                -- updateUniforms transP pulseShaderProgram ourColorCString transformCString
+                                glUseProgram pulseShaderProgram 
+                                updateUniforms transP projectionP pulseShaderProgram ourColorCString transformCString projectionCString
                                 
-                                -- batchDrawTriangles triangleHoleVertices
-                                -- drawTriangleHoles iterations startingSubTriangle 
+                                batchDrawTriangles triangleHoleVertices
 
                                 GLFW.swapBuffers window
                                 loop

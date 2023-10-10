@@ -21,11 +21,11 @@ vertexShaderSourceTransform = "#version 330 core\n\
 
 fragmentShaderSourceColor = unlines ["#version 330 core",
     "out vec4 FragColor;",
-    "in vec3 ourColor;",
     "",
+    "uniform vec4 backgroundColor;",
     "void main()",
     "{",
-    "    FragColor = vec4(ourColor, 1.0f);",
+    "    FragColor = backgroundColor;",
     "}"]
 
 fragmentShaderSourceBlue = unlines ["#version 330 core",
@@ -33,7 +33,7 @@ fragmentShaderSourceBlue = unlines ["#version 330 core",
     "",
     "void main()",
     "{",
-    "    FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);",
+    "    FragColor = vec4(0.0f, 0.0f, 1.0f, 0.0f);",
     "}"]
 
 fragmentShaderSourceBlack = unlines ["#version 330 core",
@@ -51,7 +51,7 @@ fragmentShaderSourceRed = unlines ["#version 330 core",
     "",
     "void main()",
     "{",
-    "    FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);",
+    "    FragColor = vec4(1.0f, 1.0f, 1.0f, 0.5f);",
     "}"]
 
 
