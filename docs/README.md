@@ -31,4 +31,4 @@ Any contributions are greatly appreciated! Feel free to open up a PR to address 
 
 ## Acknowledgements
 
-This project was started during my Summer 2 '23 batch at the [Recurse Center](https://www.recurse.com). Thank you to everyone in the community for providing a supportive and encouraging space.
+This project was started during my Summer 2 '23 batch at the [Recurse Center](https://www.recurse.com). Thank you to everyone in the community for providing a supportive and encouraging space for such a diverse collection of programmers.
